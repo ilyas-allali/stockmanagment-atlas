@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#173f37">
+  <title>Atlas — Gestion commerciale</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/platform.css">
+  <link rel="stylesheet" href="/purchases.css">
+  <link rel="stylesheet" href="/accounting.css">
+  <link rel="stylesheet" href="/vat.css">
+  <script src="/platform.js" defer></script>
+  <script src="/purchases.js" defer></script>
+  <script src="/accounting.js" defer></script>
+  <script src="/settlements.js" defer></script>
+  <script src="/vat.js" defer></script>
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <a class="skip" href="#main">Aller au contenu</a>
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="workspace">
+    <header class="topbar" id="topbar"></header>
+    <main id="main" tabindex="-1"><div class="loading">Ouverture de votre espace…</div></main>
+    <footer>Atlas <span>Un peu moins de gestion. Un peu plus de temps.</span><span id="connection">Enregistré dans votre espace</span></footer>
+  </div>
+  <dialog id="dialog" aria-labelledby="dialog-title"></dialog>
+  <div id="toast" role="status" aria-live="polite"></div>
+  <div id="print-area"></div>
+</body>
+</html>

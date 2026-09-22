@@ -6,6 +6,8 @@ Moving PCs or continuing in a new chat? Read [PROJECT_HANDOFF.md](PROJECT_HANDOF
 
 ## Start the new app
 
+First copy `.env.example` to `.env` and set `POSTGRES_PASSWORD` plus the matching `DATABASE_URL` as described in the template. When restoring an existing installation, transfer its private `.env` instead. Database credentials are never committed.
+
 ```sh
 python3 -m venv .venv
 .venv/bin/python -m pip install -r requirements.txt

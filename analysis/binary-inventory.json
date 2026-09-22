@@ -1,0 +1,167 @@
+[
+  {
+    "file": "atlascom (1).exe",
+    "bytes": 30692302,
+    "sha256": "31d47141dab80dd5d4e30d2427c65692e10cf282f0530a4b71b8a48e36b86751",
+    "pe_machine": "0x14c",
+    "overlay_offset": 40448,
+    "overlay_bytes": 30651854,
+    "overlay_entropy": 7.9998,
+    "foxpro_payload_offsets": [
+      40448,
+      142163,
+      8653894,
+      12857356,
+      12992534
+    ],
+    "utf16_strings": [
+      "VFP9.EXE",
+      "VFP9R.DLL",
+      "VFP9T.DLL",
+      "Microsoft Visual FoxPro:Cannot locate the Microsoft Visual FoxPro support library.\"The %s file is invalid or damaged.)Cannot run the file %s.",
+      "Error code 0xlX.",
+      "VS_VERSION_INFO",
+      "StringFileInfo",
+      "040C04E4",
+      "FileVersion",
+      "5.84.0",
+      "ProductVersion",
+      "5.84.0",
+      "InternalName",
+      "atlascomys",
+      "OriginalFilename",
+      "atlascomys.exe",
+      "CompanyName",
+      "DYNA INFO",
+      "FileDescription",
+      "LegalCopyright",
+      "ProductName",
+      " Atlascom",
+      "VarFileInfo",
+      "Translation"
+    ]
+  },
+  {
+    "file": "atlascom.exe",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "file": "atlascompta (1).exe",
+    "bytes": 21536804,
+    "sha256": "210f4537009efbd60e23961437bef75af3c2326a07d0df9057771d0ed817affc",
+    "pe_machine": "0x14c",
+    "overlay_offset": 12288,
+    "overlay_bytes": 21524516,
+    "overlay_entropy": 7.9996,
+    "foxpro_payload_offsets": [
+      12288
+    ],
+    "utf16_strings": [
+      "VFP9.EXE",
+      "VFP9R.DLL",
+      "VFP9T.DLL",
+      "Microsoft Visual FoxPro:Cannot locate the Microsoft Visual FoxPro support library.\"The %s file is invalid or damaged.)Cannot run the file %s.",
+      "Error code 0xlX.",
+      "VS_VERSION_INFO",
+      "StringFileInfo",
+      "040C04E4",
+      "FileVersion",
+      "3.0.0",
+      "ProductVersion",
+      "3.0.0",
+      "InternalName",
+      "atlascompta",
+      "OriginalFilename",
+      "atlascompta.exe",
+      "CompanyName",
+      "DYNA INFO",
+      "FileDescription",
+      "Gestion de comptabilit",
+      "LegalCopyright",
+      "Dyna Info ",
+      " Octobre 2004. Tous droits r",
+      "ProductName",
+      "ATLASCOMPTA",
+      "VarFileInfo",
+      "Translation"
+    ]
+  },
+  {
+    "file": "atlascompta.exe",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "file": "liasse (1).exe",
+    "bytes": 18978970,
+    "sha256": "483d08ee5f0ff40bf651482256fac32b9136762aea4bd56fac7f375ca99e9f99",
+    "pe_machine": "0x14c",
+    "overlay_offset": 11264,
+    "overlay_bytes": 18967706,
+    "overlay_entropy": 7.9902,
+    "foxpro_payload_offsets": [
+      14916
+    ],
+    "utf16_strings": [
+      "VFP9.EXE",
+      "VFP9R.DLL",
+      "VFP9T.DLL",
+      "Microsoft Visual FoxPro:Cannot locate the Microsoft Visual FoxPro support library.\"The %s file is invalid or damaged.)Cannot run the file %s.",
+      "Error code 0xlX."
+    ]
+  },
+  {
+    "file": "liasse.exe",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "file": "transfert (1).exe",
+    "bytes": 5593565,
+    "sha256": "e754403eb3a0964f5840a0969fb6e05a2fded8c44b9f5512e7a70a576708617d",
+    "pe_machine": "0x14c",
+    "overlay_offset": 11264,
+    "overlay_bytes": 5582301,
+    "overlay_entropy": 7.9946,
+    "foxpro_payload_offsets": [
+      14916
+    ],
+    "utf16_strings": [
+      "VFP9.EXE",
+      "VFP9R.DLL",
+      "VFP9T.DLL",
+      "Microsoft Visual FoxPro:Cannot locate the Microsoft Visual FoxPro support library.\"The %s file is invalid or damaged.)Cannot run the file %s.",
+      "Error code 0xlX."
+    ]
+  },
+  {
+    "file": "transfert.exe",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "file": "tva (1).exe",
+    "bytes": 7546964,
+    "sha256": "2fcf715b0750c025b3b863d43858868561196a362426b2bdda43dc3e17fb996c",
+    "pe_machine": "0x14c",
+    "overlay_offset": 11264,
+    "overlay_bytes": 7535700,
+    "overlay_entropy": 7.9995,
+    "foxpro_payload_offsets": [
+      14916
+    ],
+    "utf16_strings": [
+      "VFP9.EXE",
+      "VFP9R.DLL",
+      "VFP9T.DLL",
+      "Microsoft Visual FoxPro:Cannot locate the Microsoft Visual FoxPro support library.\"The %s file is invalid or damaged.)Cannot run the file %s.",
+      "Error code 0xlX."
+    ]
+  },
+  {
+    "file": "tva.exe",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+]

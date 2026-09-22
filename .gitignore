@@ -1,0 +1,19 @@
+data/*.sqlite3*
+__pycache__/
+*.pyc
+node_modules/
+test-results/
+.venv/
+.env
+data/
+.coverage
+# Private local configuration and database copies, wherever they are stored.
+.env.*
+!.env.example
+*.dump
+*.dump.sha256
+*.sqlite3
+*.sqlite3-*
+# Windows download metadata is not portable to a new Windows checkout.
+*:Zone.Identifier
+.DS_Store

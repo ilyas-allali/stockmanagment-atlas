@@ -1,0 +1,160 @@
+/* End-to-end purchasing checks in an isolated, disposable PostgreSQL database. */
+const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
+const {spawn,spawnSync}=require('node:child_process');
+const {randomBytes}=require('node:crypto');
+const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
+const root=path.resolve(__dirname,'..'),python=path.join(root,'.venv/bin/python');
+const db=`atlas_browser_${randomBytes(6).toString('hex')}`,base='http://localhost:8767';
+const screenshots=path.join(root,'test-results');
+(async()=>{
+  let browser,server,page;
+  try{
+    const fixture=spawnSync(python,['tests/platform_fixture.py','create',db],{cwd:root,encoding:'utf8'});
+    if(fixture.status!==0)throw new Error(fixture.stderr);
+    const data=JSON.parse(fixture.stdout);
+    server=spawn(python,['manage.py','runserver','127.0.0.1:8767','--noreload'],{cwd:root,env:{...process.env,DATABASE_URL:data.database_url},stdio:'ignore'});
+    let ready=false;
+    for(let i=0;i<100;i++){try{if((await fetch(base+'/api/auth/me')).ok){ready=true;break;}}catch{}await new Promise(r=>setTimeout(r,100));}
+    assert(ready,'Django server started');
+    browser=await chromium.launch({headless:true,...(process.env.ATLAS_CHROME?{executablePath:process.env.ATLAS_CHROME}:{}),args:['--no-sandbox']});
+    const context=await browser.newContext({viewport:{width:1440,height:1000},reducedMotion:'reduce'});
+    page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
+    fs.mkdirSync(screenshots,{recursive:true});
+    async function login(target,username){
+      await target.goto(base);
+      await target.getByLabel('Identifiant',{exact:true}).fill(username);
+      await target.getByLabel('Mot de passe',{exact:true}).fill('Browser-Atlas-Password-729!');
+      await target.getByRole('button',{name:'Se connecter',exact:true}).click();
+      await target.getByRole('heading',{name:'Chaque jour, une vue plus claire.'}).waitFor();
+    }
+    const close=async()=>{await page.getByRole('button',{name:'Fermer',exact:true}).last().click();};
+    const current=async()=>await (await page.request.get(`${base}/api/companies/${data.a}/state`)).json();
+    await login(page,'browser-owner');
+    await page.getByRole('link',{name:'Fournisseurs',exact:true}).click();
+    await page.getByRole('button',{name:'Nouveau fournisseur',exact:true}).first().click();
+    await page.getByLabel('Raison sociale').fill('Comptoir Atlas');
+    await page.getByLabel('Téléphone',{exact:true}).fill('0522000000');
+    await page.getByLabel('Ville',{exact:true}).fill('Casablanca');
+    await page.getByLabel('ICE',{exact:true}).fill('123456789012345');
+    await page.getByLabel('Email',{exact:true}).fill('contact@example.test');
+    await page.getByRole('button',{name:'Enregistrer le fournisseur'}).click();
+    await page.getByText('Comptoir Atlas',{exact:true}).waitFor();
+    await page.getByRole('button',{name:'Modifier',exact:true}).click();
+    await page.getByLabel('Adresse',{exact:true}).fill('Rue du commerce');
+    await page.getByRole('button',{name:'Enregistrer le fournisseur'}).click();
+    await page.locator('dialog').waitFor({state:'hidden'});
+    assert.equal((await current()).suppliers[0].address,'Rue du commerce');
+
+    // A second line exercises per-line rounding instead of a single invoice-wide tax.
+    await page.getByRole('link',{name:/Produits & stock/}).click();
+    await page.getByRole('button',{name:'Nouveau produit',exact:true}).click();
+    await page.getByLabel('Nom du produit').fill('Rondelle');
+    await page.locator('dialog').getByLabel('Référence').fill('ROND-01');
+    await page.getByLabel('Prix de vente').fill('1');
+    await page.getByRole('button',{name:'Créer le produit',exact:true}).click();
+    await page.getByText('Rondelle',{exact:true}).waitFor();
+    const secondProduct=(await current()).products.find(p=>p.sku==='ROND-01');
+    await page.getByRole('link',{name:'Achats',exact:true}).click();
+    await page.getByRole('button',{name:'Nouvel achat',exact:true}).first().click();
+    await page.getByLabel('Référence facture fournisseur').fill('FA-2026-001');
+    await page.getByLabel('Produit à acheter').selectOption(String(data.product));
+    await page.getByRole('button',{name:'Ajouter une ligne'}).click();
+    await page.getByLabel('Quantité Produit Casablanca').fill('3');
+    await page.getByLabel('Prix achat Produit Casablanca').fill('2.75');
+    await page.getByLabel('Taxe achat Produit Casablanca').fill('20');
+    await page.getByLabel('Produit à acheter').selectOption(String(secondProduct.id));
+    await page.getByRole('button',{name:'Ajouter une ligne'}).click();
+    await page.getByLabel('Quantité Rondelle').fill('2');
+    await page.getByLabel('Prix achat Rondelle').fill('0.05');
+    await page.getByLabel('Taxe achat Rondelle').fill('10');
+    assert.match(await page.locator('#purchase-totals').innerText(),/10,01 DH/);
+    await page.screenshot({path:path.join(screenshots,'purchase-draft.png'),fullPage:true});
+    await page.getByRole('button',{name:'Enregistrer le brouillon'}).click();
+    await page.getByRole('heading',{name:'Achat AC-0001',exact:true}).waitFor();
+    assert.match(await page.locator('dialog').innerText(),/Brouillon/);
+    let records=await current();assert.equal(records.purchases[0].total,1001);
+    assert.equal(records.products.find(p=>p.id===data.product).stock,10);
+    assert.equal(records.products.find(p=>p.id===secondProduct.id).stock,0);
+    await page.getByRole('button',{name:'Modifier',exact:true}).click();
+    await page.getByLabel('Note',{exact:true}).fill('Livraison complète');
+    await page.getByRole('button',{name:'Enregistrer le brouillon'}).click();
+    await page.getByRole('heading',{name:'Achat AC-0001',exact:true}).waitFor();
+    await page.getByRole('button',{name:'Réceptionner les produits'}).click();
+    await page.getByRole('button',{name:'Confirmer la réception'}).click();
+    await page.getByRole('heading',{name:'Achat AC-0001',exact:true}).waitFor();
+    records=await current();assert.equal(records.products.find(p=>p.id===data.product).stock,13);
+    assert.equal(records.products.find(p=>p.id===secondProduct.id).stock,2);
+    assert.equal(await page.getByRole('button',{name:'Modifier',exact:true}).count(),0);
+    await page.getByRole('button',{name:'Régler le fournisseur',exact:true}).click();
+    await page.getByLabel('Montant du règlement').fill('4');
+    await page.getByLabel('Référence du règlement').fill('VIR-001');
+    await page.getByRole('button',{name:'Enregistrer le règlement fournisseur'}).click();
+    await page.getByRole('heading',{name:'Achat AC-0001',exact:true}).waitFor();
+    assert.match(await page.locator('dialog').innerText(),/6,01 DH/);
+    assert.equal(await page.getByRole('button',{name:'Annuler cet achat'}).count(),0);
+    await page.screenshot({path:path.join(screenshots,'purchase-received.png'),fullPage:true});
+    await page.evaluate(()=>window.print=()=>{});
+    await page.getByRole('button',{name:'Imprimer',exact:true}).click();
+    assert.match(await page.locator('#print-area').innerText(),/Copie interne/);
+    await page.getByRole('button',{name:'Régler le fournisseur',exact:true}).click();
+    await page.getByRole('button',{name:'Enregistrer le règlement fournisseur'}).click();
+    await page.getByRole('heading',{name:'Achat AC-0001',exact:true}).waitFor();
+    assert.match(await page.locator('dialog').innerText(),/Réglée/);
+    records=await current();assert.equal(records.supplier_payments.length,2);
+    assert.equal(records.purchases[0].paid,1001);await close();
+
+    // Received, unpaid invoice can be reversed once with a reason.
+    await page.getByRole('button',{name:'Nouvel achat',exact:true}).click();
+    await page.getByLabel('Référence facture fournisseur').fill('FA-2026-002');
+    await page.getByLabel('Produit à acheter').selectOption(String(data.product));
+    await page.getByRole('button',{name:'Ajouter une ligne'}).click();
+    await page.getByRole('button',{name:'Enregistrer le brouillon'}).click();
+    await page.getByRole('heading',{name:'Achat AC-0002',exact:true}).waitFor();
+    await page.getByRole('button',{name:'Réceptionner les produits'}).click();
+    await page.getByRole('button',{name:'Confirmer la réception'}).click();
+    await page.getByRole('heading',{name:'Achat AC-0002',exact:true}).waitFor();
+    await page.getByRole('button',{name:'Annuler cet achat',exact:true}).click();
+    await page.getByLabel('Motif d’annulation').fill('Réception saisie par erreur');
+    await page.getByRole('button',{name:'Confirmer l’annulation'}).click();
+    await page.getByRole('heading',{name:'Achat AC-0002',exact:true}).waitFor();
+    records=await current();assert.equal(records.products.find(p=>p.id===data.product).stock,13);
+    assert.equal(records.purchases[0].status,'cancelled');await close();
+    await page.getByRole('button',{name:'Annulés',exact:true}).click();
+    assert.match(await page.locator('#list-content').innerText(),/AC-0002/);
+    assert.doesNotMatch(await page.locator('#list-content').innerText(),/AC-0001/);
+    await page.getByRole('button',{name:'Tous',exact:true}).click();
+    await page.getByLabel('N° achat, fournisseur ou référence…').fill('FA-2026-001');
+    assert.doesNotMatch(await page.locator('#list-content').innerText(),/AC-0002/);
+    await page.getByLabel('N° achat, fournisseur ou référence…').fill('');
+    await page.screenshot({path:path.join(screenshots,'purchases-desktop.png'),fullPage:true});
+    const csv=await page.request.get(`${base}/api/companies/${data.a}/export/purchases`);
+    assert.equal(csv.status(),200);assert.match(await csv.text(),/FA-2026-001/);
+    await page.getByLabel('Société active',{exact:true}).selectOption(String(data.b));
+    await page.getByRole('heading',{name:'Aucun achat ici',exact:true}).waitFor();
+    assert.doesNotMatch(await page.locator('main').innerText(),/Comptoir Atlas/);
+    await page.getByRole('link',{name:'Fournisseurs',exact:true}).click();
+    await page.getByRole('heading',{name:'Votre carnet fournisseurs',exact:true}).waitFor();
+    assert.equal(await page.locator('#print-area').innerText(),'');
+
+    const readerContext=await browser.newContext({viewport:{width:390,height:844},reducedMotion:'reduce'});
+    const reader=await readerContext.newPage();reader.on('pageerror',e=>errors.push(e.message));
+    await login(reader,'browser-reader');
+    await reader.getByRole('button',{name:'Ouvrir le menu'}).click();
+    await reader.getByRole('link',{name:'Achats',exact:true}).click();
+    assert.equal(await reader.getByRole('button',{name:'Nouvel achat',exact:true}).count(),0);
+    assert.equal(await reader.getByRole('link',{name:'Exporter',exact:true}).count(),0);
+    assert.equal(await reader.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+    await reader.screenshot({path:path.join(screenshots,'purchases-mobile.png'),fullPage:true});
+    await reader.getByRole('button',{name:'AC-0001',exact:true}).click();
+    assert.equal(await reader.getByRole('button',{name:'Régler le fournisseur',exact:true}).count(),0);
+    assert.equal(await reader.getByRole('button',{name:'Annuler cet achat',exact:true}).count(),0);
+    assert.deepEqual(errors,[]);
+    console.log('PASS: supplier create/edit, purchase draft/edit, mixed tax rounding, stock receipt, partial/full supplier payments, cancellation, search/filters, CSV/print, company isolation and mobile read-only access.');
+  }catch(error){if(page){console.error('Form errors:',await page.locator('.form-error').allTextContents());await page.screenshot({path:path.join(screenshots,'purchases-failure.png'),fullPage:true});}throw error;}
+  finally{
+    if(browser)await browser.close();
+    if(server){const exited=new Promise(resolve=>server.once('exit',resolve));if(server.exitCode===null){server.kill('SIGTERM');await exited;}}
+    const result=spawnSync(python,['tests/platform_fixture.py','drop',db],{cwd:root,encoding:'utf8'});
+    if(result.status!==0)console.error('Temporary database cleanup failed:',result.stderr);
+  }
+})().catch(e=>{console.error(e);process.exitCode=1;});

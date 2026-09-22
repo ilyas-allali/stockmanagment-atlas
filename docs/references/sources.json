@@ -1,0 +1,18 @@
+[
+  {
+    "file": "simpl-is-edi-v1.0-2010.pdf",
+    "url": "https://www.finances.gov.ma/Publication/dgi/2010/9370_cahierdescharges.pdf",
+    "retrieved": "2026-09-19",
+    "bytes": 574036,
+    "sha256": "8cbb73098e5216e1b017f3d3260a1750701270e23f02eb0f11717e11267e741e",
+    "content_type": "application/pdf"
+  },
+  {
+    "file": "mef-eservices.html",
+    "url": "https://www.finances.gov.ma/fr/Pages/e-Services-et-formulaires.aspx",
+    "retrieved": "2026-09-19",
+    "bytes": 139513,
+    "sha256": "50e444764053f1dec6fe722210c823deaa54221c90821d53845cbee6dfb3559b",
+    "content_type": "text/html; charset=utf-8"
+  }
+]
